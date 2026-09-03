@@ -1,37 +1,39 @@
 # dsh-add-to-chat
 
-Select text in a DSH assistant reply and choose **Add to chat**. The plugin adds a structured quote chip to the current composer and expands it into the selected assistant text only when the user sends their next message.
+在 DSH 的助手回复中选中文字后，点击 **添加到对话**。插件会在当前输入框加入结构化引用 chip，并只在用户发送下一条消息时将其展开为所选助手原文。
 
-## Scope
+English: [README.en.md](README.en.md)
 
-- Browser-only DSH client plugin; no Host service or product-specific integration.
-- Works with a selection from one assistant message.
-- Does not send a message automatically. The user can edit the draft before sending.
-- The composer shows a removable quote count with a hover preview. It is not Markdown pasted into the user's draft.
-- A small marker remains beside the original selection while the quote is in the composer.
+## 首版范围
 
-## Compatibility
+- 纯浏览器端 DSH 客户端插件；不需要 Host 服务或任何产品专用集成。
+- 只处理单条助手回复中的一段选中文本。
+- 不自动发送；用户仍可修改输入框后再发送。
+- 输入框显示可删除的引用数量，并可悬浮预览；不会把 Markdown 直接写入用户草稿。
+- 引用仍在输入框时，原助手选区附近保留一个小标记。
 
-The plugin identifies reply ownership through the assistant body's `data-dsh-message-role="assistant"` marker rather than unstable CSS class names. The host must provide that semantic marker, structured reference insertion and serialization, and `SessionInput.removeReference()`.
+## 兼容性
 
-## Install
+插件通过助手正文的 `data-dsh-message-role="assistant"` 标记判断选区归属，不依赖容易变化的 CSS 类名。宿主需要提供该语义标记、结构化引用插入与序列化能力，以及 `SessionInput.removeReference()`。
+
+## 安装
 
 ```sh
 dsh plugin --profile web add dsh-add-to-chat
 ```
 
-For DSH Desktop, install into the active Desktop profile. The Electron renderer uses the same DSH Web client module graph.
+DSH Desktop 请安装到当前使用的 Desktop Profile；Electron 渲染器复用同一套 DSH Web 客户端模块图。
 
-## Development
+## 开发
 
 ```sh
-npm install
-npm run check
+corepack pnpm install
+corepack pnpm run check
 dsh plugin --profile web add .
 ```
 
-Restart the selected DSH profile after installation. Do not also manually add this plugin id to a profile `cordis.patch.yml`: the bundle already registers itself.
+安装后重启目标 DSH Profile。不要再手动把同一插件 id 写入 Profile 的 `cordis.patch.yml`，bundle 已自行注册。
 
-## License
+## 许可证
 
 MIT
