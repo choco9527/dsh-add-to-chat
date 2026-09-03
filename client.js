@@ -10,6 +10,7 @@ window.__ModuleLoader__.load({
     const RAIL_ID = 'dsh-add-to-chat-rail'
     const PREVIEW_ID = 'dsh-add-to-chat-preview'
     const MARKER_ID = 'dsh-add-to-chat-marker'
+    const CHIP_ID = 'dsh-add-to-chat-chip'
     const QUOTE_SOURCE = 'dsh-add-to-chat-assistant-quote'
     const ASSISTANT_REPLY_SELECTOR = '[data-dsh-message-role="assistant"]'
     const QUOTE_LABEL = '引用助手回复：'
@@ -20,14 +21,14 @@ window.__ModuleLoader__.load({
       const style = document.createElement('style')
       style.id = STYLE_ID
       style.textContent = [
-        `[data-${ACTION_ID}], [data-${RAIL_ID}], [data-${PREVIEW_ID}], [data-${MARKER_ID}] { position: fixed; z-index: 1200; }`,
+        `[data-${ACTION_ID}], [data-${RAIL_ID}], [data-${PREVIEW_ID}], [data-${MARKER_ID}] { position: fixed; z-index: 1; }`,
         `[data-${ACTION_ID}][hidden], [data-${RAIL_ID}][hidden], [data-${PREVIEW_ID}][hidden], [data-${MARKER_ID}][hidden] { display: none !important; }`,
         `[data-${ACTION_ID}] { display: inline-flex; transform: translate(-50%, -100%); }`,
         `[data-${ACTION_ID}][data-placement="below"] { transform: translateX(-50%); }`,
-        `[data-${ACTION_ID}] button, [data-${RAIL_ID}] [data-quote-pill] { position: relative; overflow: hidden; border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l2, #000) 34%, transparent); border-radius: 28px; background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #fff) 48%, transparent); box-shadow: 0 8px 24px rgb(15 23 42 / 10%); color: var(--dsw-alias-label-primary, #17191c); font: inherit; backdrop-filter: blur(2px) saturate(1.12); -webkit-backdrop-filter: blur(2px) saturate(1.12); }`,
+        `[data-${ACTION_ID}] button, [data-${RAIL_ID}] [data-quote-pill] { position: relative; overflow: hidden; border: 1px solid color-mix(in srgb, var(--dsw-alias-border-l2, #000) 56%, transparent); border-radius: 28px; background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #fff) 90%, transparent); box-shadow: 0 10px 26px rgb(15 23 42 / 18%), 0 1px 3px rgb(15 23 42 / 16%); color: var(--dsw-alias-label-primary, #17191c); font: inherit; backdrop-filter: blur(2px) saturate(1.12); -webkit-backdrop-filter: blur(2px) saturate(1.12); }`,
         `[data-${ACTION_ID}] button::before, [data-${RAIL_ID}] [data-quote-pill]::before { content: ''; position: absolute; inset: 1px 1px auto; height: 42%; border-radius: inherit; background: linear-gradient(180deg, rgb(255 255 255 / 34%), transparent); pointer-events: none; }`,
         `[data-${ACTION_ID}] button { height: 32px; padding: 0 13px; cursor: pointer; font-size: 13px; }`,
-        `[data-${ACTION_ID}] button:hover, [data-${ACTION_ID}] button:focus-visible { background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #fff) 42%, transparent); }`,
+        `[data-${ACTION_ID}] button:hover, [data-${ACTION_ID}] button:focus-visible { background: color-mix(in srgb, var(--dsw-alias-bg-layer-1, #fff) 94%, transparent); }`,
         `[data-${RAIL_ID}] { display: flex; align-items: center; gap: 4px; }`,
         `[data-${RAIL_ID}] [data-quote-pill] { height: 30px; padding: 0 11px; cursor: pointer; font-size: 13px; }`,
         `[data-${RAIL_ID}] [data-quote-remove-all] { width: 30px; height: 30px; border: 0; border-radius: 50%; cursor: pointer; background: transparent; color: var(--dsw-alias-label-primary, #17191c); font: 18px/1 system-ui, sans-serif; }`,
@@ -35,6 +36,7 @@ window.__ModuleLoader__.load({
         `[data-${PREVIEW_ID}] [data-quote-preview-item] { display: flex; align-items: flex-start; gap: 8px; }`,
         `[data-${PREVIEW_ID}] [data-quote-preview-text] { flex: 1; max-height: 120px; overflow: auto; white-space: pre-wrap; }`,
         `[data-${PREVIEW_ID}] button { flex: none; width: 22px; height: 22px; border: 0; border-radius: 50%; cursor: pointer; background: transparent; color: inherit; font-size: 16px; }`,
+        `[data-${CHIP_ID}] { border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #1677ff) 26%, transparent); background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover, #eff6ff) 90%, transparent); box-shadow: inset 0 1px rgb(255 255 255 / 22%); backdrop-filter: blur(2px) saturate(1.1); -webkit-backdrop-filter: blur(2px) saturate(1.1); }`,
         `[data-${MARKER_ID}] { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #1677ff) 28%, transparent); border-radius: 50%; background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-state-business-primary, #1677ff); box-shadow: 0 4px 12px rgb(15 23 42 / 14%); cursor: pointer; font: 11px/1 system-ui, sans-serif; }`,
         `@supports not (backdrop-filter: blur(3px)) { [data-${ACTION_ID}] button, [data-${RAIL_ID}] [data-quote-pill] { background: var(--dsw-alias-bg-layer-1, #fff); } }`,
         `@supports (anchor-name: --dsh-add-to-chat-anchor) { [data-${PREVIEW_ID}][data-anchored] { top: anchor(bottom); left: anchor(center); transform: translate(-50%, 8px); position-try-fallbacks: flip-block, flip-inline; } }`,
@@ -96,6 +98,14 @@ window.__ModuleLoader__.load({
       let previewTimer = null
       const quotes = new Map()
       const markers = new Map()
+
+      function decorateQuoteChips() {
+        const labels = new Set([...quotes.values()].map(quote => quote.label))
+        if (labels.size === 0) return
+        for (const chip of document.querySelectorAll('[contenteditable="true"] [title]')) {
+          if (labels.has(chip.getAttribute('title'))) chip.setAttribute(`data-${CHIP_ID}`, '')
+        }
+      }
 
       function hideAction() {
         action.hidden = true
@@ -233,10 +243,22 @@ window.__ModuleLoader__.load({
 
       function removeQuote(occurrence) {
         const input = currentInput()
-        if (input?.removeReference?.(occurrence.occurrenceId) !== true) return
+        const removed = input?.removeReference?.(occurrence.occurrenceId) === true
+          || removeReferenceWithTextEdit(input, occurrence)
+        if (!removed) return
         quotes.delete(occurrence.ref)
         removeMarker(occurrence.ref)
         refreshQuoteRail()
+      }
+
+      function removeReferenceWithTextEdit(input, occurrence) {
+        const snapshot = input?.state.getSnapshot()
+        if (!snapshot || typeof occurrence.offset !== 'number' || typeof occurrence.length !== 'number') return false
+        const index = snapshot.occurrences.findIndex(candidate => candidate.occurrenceId === occurrence.occurrenceId)
+        if (index < 0) return false
+        let start = occurrence.offset
+        for (const candidate of snapshot.occurrences.slice(0, index)) start -= candidate.length - 1
+        return input.insertText?.('', { start, end: start + 1, draftRev: snapshot.draftRev }) === true
       }
 
       function refreshQuoteRail() {
@@ -299,13 +321,13 @@ window.__ModuleLoader__.load({
         if (!input || selectedText === '') return
         const snapshot = input.state.getSnapshot()
         const ref = referenceId()
-        const quote = { ref, text: selectedText }
+        const quote = { ref, text: selectedText, label: compactLabel(selectedText) }
         quotes.set(ref, quote)
         const end = detectEnd(snapshot)
         const inserted = input.insertReference({
           source: QUOTE_SOURCE,
           ref,
-          label: compactLabel(selectedText),
+          label: quote.label,
           clipboardText: selectedText,
         }, { start: end, end, draftRev: snapshot.draftRev })
         if (!inserted) {
@@ -315,6 +337,7 @@ window.__ModuleLoader__.load({
         createMarker(quote, selectedRange)
         window.getSelection()?.removeAllRanges()
         hideAction()
+        requestAnimationFrame(decorateQuoteChips)
         refreshQuoteRail()
       }
 
@@ -350,6 +373,8 @@ window.__ModuleLoader__.load({
       document.addEventListener('keydown', onKeyDown, true)
       window.addEventListener('resize', onViewportChange)
       window.addEventListener('scroll', onViewportChange, true)
+      const chipObserver = new MutationObserver(decorateQuoteChips)
+      chipObserver.observe(document.body, { childList: true, subtree: true })
       const sessionsOff = ctx.sessions.list.subscribe(observeCurrentInput)
       observeCurrentInput()
 
@@ -360,6 +385,7 @@ window.__ModuleLoader__.load({
         document.removeEventListener('keydown', onKeyDown, true)
         window.removeEventListener('resize', onViewportChange)
         window.removeEventListener('scroll', onViewportChange, true)
+        chipObserver.disconnect()
         sessionsOff()
         inputOff?.()
         action.remove()

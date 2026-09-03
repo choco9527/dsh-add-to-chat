@@ -19,6 +19,8 @@ test('client source inserts structured references instead of Markdown quotes', a
   const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
   assert.match(source, /input\.insertReference\(/)
   assert.match(source, /input\?\.removeReference\?\./)
+  assert.match(source, /removeReferenceWithTextEdit\(input, occurrence\)/)
+  assert.match(source, /input\.insertText\?\.\('', \{ start, end: start \+ 1, draftRev: snapshot\.draftRev \}\)/)
   assert.match(source, /ctx\.inputTriggers\.registerSource\(source\)/)
   assert.doesNotMatch(source, /map\(line => `> \$\{line\}`\)/)
 })
@@ -34,4 +36,10 @@ test('client source recognizes only the semantic assistant reply marker', async 
   assert.match(source, /anchor === assistantReply\(selection\.focusNode\)/)
   assert.doesNotMatch(source, /data-time-hover-root/)
   assert.doesNotMatch(source, /\[class\*="bubble"\]/)
+})
+
+test('plugin decorates only its own inserted reference chips', async () => {
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  assert.match(source, /const CHIP_ID = 'dsh-add-to-chat-chip'/)
+  assert.match(source, /chip\.setAttribute\(`data-\$\{CHIP_ID\}`, ''\)/)
 })
