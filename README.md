@@ -16,6 +16,8 @@ English: [README.en.md](README.en.md)
 
 3. 继续正常输入并发送。注释会随本次提交作为独立上下文传给模型；提交成功后自动清空，提交失败则恢复。
 
+![发送后在用户消息上方悬浮查看关联注释](docs/images/add-to-chat-submitted-annotation.png)
+
 ## 功能说明
 
 - 纯浏览器端 DSH 客户端插件；不需要 Host 服务或任何产品专用集成。

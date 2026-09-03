@@ -16,6 +16,8 @@ Select text in a DSH assistant reply and choose **Add to chat**. The plugin keep
 
 3. Keep writing normally and send. The annotations travel as independent context for that submission, are consumed after a successful send, and return if the submission fails.
 
+![Hover preview of a submitted annotation above its user message](docs/images/add-to-chat-submitted-annotation.png)
+
 ## Features
 
 - Browser-only DSH client plugin; no Host service or product-specific integration.

@@ -20,6 +20,7 @@ test('client source submits plugin-owned draft context instead of touching the e
   assert.match(source, /ctx\.conversation\.draftContexts\.register\(source\)/)
   assert.match(source, /take: sessionId =>/)
   assert.match(source, /settle: \(sessionId, items, accepted\) =>/)
+  assert.match(source, /form: 'annotation'/)
   assert.doesNotMatch(source, /input\.insertReference\(/)
   assert.doesNotMatch(source, /ctx\.inputTriggers\.registerSource\(source\)/)
   assert.doesNotMatch(source, /map\(line => `> \$\{line\}`\)/)

@@ -366,7 +366,12 @@ window.__ModuleLoader__.load({
           const taken = refs.map(ref => quotes.get(ref)).filter(Boolean)
           for (const quote of taken) removeMarker(quote.ref)
           refreshQuoteRail()
-          return taken.map(quote => ({ id: quote.ref, plugin: PLUGIN_ID, text: `${QUOTE_LABEL}\n${quote.text}` }))
+          return taken.map(quote => ({
+            id: quote.ref,
+            plugin: PLUGIN_ID,
+            text: `${QUOTE_LABEL}\n${quote.text}`,
+            form: 'annotation',
+          }))
         },
         settle: (sessionId, items, accepted) => {
           if (accepted || items.length === 0) return
