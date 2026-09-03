@@ -35,7 +35,7 @@ English: [README.en.md](README.en.md)
 ## 安装
 
 ```sh
-dsh plugin --profile web add dsh-add-to-chat
+dsh plugin --profile web add github:choco9527/dsh-add-to-chat
 ```
 
 DSH Desktop 请安装到当前使用的 Desktop Profile；Electron 渲染器复用同一套 DSH Web 客户端模块图。

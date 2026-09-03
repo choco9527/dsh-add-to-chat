@@ -34,7 +34,7 @@ The plugin relies on two semantic extensions only: an assistant body marked with
 ## Install
 
 ```sh
-dsh plugin --profile web add dsh-add-to-chat
+dsh plugin --profile web add github:choco9527/dsh-add-to-chat
 ```
 
 For DSH Desktop, install into the active Desktop profile. The Electron renderer uses the same DSH Web client module graph.

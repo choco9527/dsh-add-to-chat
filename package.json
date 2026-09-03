@@ -4,6 +4,10 @@
   "description": "Add selected DSH assistant text to the composer as a structured reference.",
   "type": "module",
   "packageManager": "pnpm@11.10.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/choco9527/dsh-add-to-chat.git"
+  },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
@@ -28,6 +32,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "node --test test/*.test.mjs",
     "check": "pnpm run build && node --check client.js && pnpm test",
+    "prepare": "pnpm run build",
     "prepack": "pnpm run check"
   },
   "keywords": [
