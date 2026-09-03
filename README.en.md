@@ -2,26 +2,32 @@
 
 [简体中文](README.md)
 
-Select text in a DSH assistant reply and choose **Add to chat**. The plugin adds a structured quote chip to the current composer and expands it into the selected assistant text only when the user sends their next message.
+Select text in a DSH assistant reply and choose **Add to chat**. The plugin keeps the selection as a separate annotation and submits it as plugin-source context only when the user sends their next message.
 
 ## Demo
 
-After selecting text in an assistant reply, add it to the current conversation from the floating action.
+1. Select text in an assistant reply, then choose the floating **Add to chat** action.
 
 ![Add to chat action after selecting text](docs/images/add-to-chat-selection-action.png)
 
-The composer shows a removable quote chip instead of writing the quoted text directly into the draft.
+2. Add as many annotations as needed. The composer remains plain text; hover the “x annotations” pill to read and remove individual selections.
 
-![Quote chip in the composer](docs/images/add-to-chat-quote-chip.png)
+![Hover preview of two separate annotations](docs/images/add-to-chat-draft-contexts.png)
+
+3. Keep writing normally and send. The annotations travel as independent context for that submission, are consumed after a successful send, and return if the submission fails.
 
 ## Features
 
 - Browser-only DSH client plugin; no Host service or product-specific integration.
-- Works with a selection from one assistant message.
-- Does not send a message automatically. The user can edit the draft before sending.
-- The composer shows a removable quote count with a hover preview. It is not Markdown pasted into the user's draft.
-- A small marker remains beside the original selection while the quote is in the composer.
-- The plugin identifies reply ownership through the assistant body's `data-dsh-message-role="assistant"` marker rather than unstable CSS class names. The host must provide that semantic marker, structured reference insertion and serialization, and `SessionInput.removeReference()`.
+- Each selection stays within one assistant reply; multiple annotations can be added in succession.
+- Does not send automatically. The user can edit ordinary draft text or send annotations without text.
+- The “x annotations” hover card shows the full source text and supports individual or bulk removal.
+- It never writes Markdown, hidden nodes, or chips into the Lexical editor, so Backspace cannot remove an annotation by accident.
+- A small marker remains beside the original selection while its annotation awaits submission.
+
+## Compatibility
+
+The plugin relies on two semantic extensions only: an assistant body marked with `data-dsh-message-role="assistant"`, and the `conversation.draftContexts` submission service. It does not depend on page CSS classes, a Host service, or product-specific code.
 
 ## Install
 

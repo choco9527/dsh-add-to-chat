@@ -10,8 +10,7 @@ window.__ModuleLoader__.load({
     const RAIL_ID = 'dsh-add-to-chat-rail'
     const PREVIEW_ID = 'dsh-add-to-chat-preview'
     const MARKER_ID = 'dsh-add-to-chat-marker'
-    const CHIP_ID = 'dsh-add-to-chat-chip'
-    const QUOTE_SOURCE = 'dsh-add-to-chat-assistant-quote'
+    const PLUGIN_ID = 'dsh-add-to-chat'
     const ASSISTANT_REPLY_SELECTOR = '[data-dsh-message-role="assistant"]'
     const QUOTE_LABEL = '引用助手回复：'
     const CARD_SELECTOR = '[data-composer-card]'
@@ -32,11 +31,16 @@ window.__ModuleLoader__.load({
         `[data-${RAIL_ID}] { display: flex; align-items: center; gap: 4px; }`,
         `[data-${RAIL_ID}] [data-quote-pill] { height: 30px; padding: 0 11px; cursor: pointer; font-size: 13px; }`,
         `[data-${RAIL_ID}] [data-quote-remove-all] { width: 30px; height: 30px; margin-left: -6px; border: 0; border-radius: 50%; cursor: pointer; background: transparent; color: var(--dsw-alias-label-primary, #17191c); font: 18px/1 system-ui, sans-serif; }`,
-        `[data-${PREVIEW_ID}] { width: min(360px, calc(100vw - 24px)); padding: 10px; border: 1px solid var(--dsw-alias-border-l2, rgb(0 0 0 / 12%)); border-radius: 14px; background: var(--dsw-alias-bg-layer-1, #fff); box-shadow: 0 14px 36px rgb(15 23 42 / 16%); color: var(--dsw-alias-label-primary, #17191c); font: 13px/1.5 system-ui, sans-serif; }`,
-        `[data-${PREVIEW_ID}] [data-quote-preview-item] { display: flex; align-items: flex-start; gap: 8px; }`,
-        `[data-${PREVIEW_ID}] [data-quote-preview-text] { flex: 1; max-height: 120px; overflow: auto; white-space: pre-wrap; }`,
-        `[data-${PREVIEW_ID}] button { flex: none; width: 22px; height: 22px; border: 0; border-radius: 50%; cursor: pointer; background: transparent; color: inherit; font-size: 16px; }`,
-        `[data-${CHIP_ID}] { border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #1677ff) 26%, transparent); background: color-mix(in srgb, var(--dsw-alias-interactive-bg-hover, #eff6ff) 90%, transparent); box-shadow: inset 0 1px rgb(255 255 255 / 22%); font-size: 12px; backdrop-filter: blur(2px) saturate(1.1); -webkit-backdrop-filter: blur(2px) saturate(1.1); }`,
+        `[data-${PREVIEW_ID}] { box-sizing: border-box; width: min(420px, calc(100vw - 24px)); border: 1px solid var(--dsw-alias-border-l2, rgb(0 0 0 / 14%)); border-radius: 14px; overflow: hidden; background: var(--dsw-alias-bg-layer-1, #fff); box-shadow: 0 12px 30px rgb(15 23 42 / 18%), 0 1px 4px rgb(15 23 42 / 12%); color: var(--dsw-alias-label-primary, #17191c); font: 12px/1.45 system-ui, sans-serif; }`,
+        `[data-${PREVIEW_ID}][data-quote-preview-list] { counter-reset: dsh-add-to-chat-quote; }`,
+        `[data-${PREVIEW_ID}] [data-quote-preview-item] { display: grid; grid-template-columns: 28px minmax(0, 1fr) 20px; column-gap: 8px; padding: 14px; }`,
+        `[data-${PREVIEW_ID}] [data-quote-preview-item] + [data-quote-preview-item] { border-top: 1px solid var(--dsw-alias-border-l2, rgb(0 0 0 / 12%)); }`,
+        `[data-${PREVIEW_ID}][data-quote-preview-list] [data-quote-preview-item]::before { grid-column: 1; counter-increment: dsh-add-to-chat-quote; content: counter(dsh-add-to-chat-quote) '.'; color: var(--dsw-alias-label-tertiary, #8b9199); font-size: 12px; line-height: 1.5; }`,
+        `[data-${PREVIEW_ID}] [data-quote-preview-content] { grid-column: 2; min-width: 0; }`,
+        `[data-${PREVIEW_ID}] [data-quote-preview-label] { margin-bottom: 2px; color: var(--dsw-alias-label-tertiary, #8b9199); font-size: 12px; }`,
+        `[data-${PREVIEW_ID}] [data-quote-preview-text] { max-height: 104px; overflow: auto; color: var(--dsw-alias-label-primary, #17191c); font-size: 13px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }`,
+        `[data-${PREVIEW_ID}] [data-quote-preview-remove] { grid-column: 3; align-self: start; width: 20px; height: 20px; border: 0; border-radius: 50%; cursor: pointer; background: transparent; color: var(--dsw-alias-label-tertiary, #8b9199); font-size: 15px; line-height: 1; opacity: .58; }`,
+        `[data-${PREVIEW_ID}] [data-quote-preview-remove]:hover, [data-${PREVIEW_ID}] [data-quote-preview-remove]:focus-visible { background: rgb(15 23 42 / 8%); color: var(--dsw-alias-label-primary, #17191c); opacity: 1; }`,
         `[data-${MARKER_ID}] { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #1677ff) 28%, transparent); border-radius: 50%; background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-state-business-primary, #1677ff); box-shadow: 0 4px 12px rgb(15 23 42 / 14%); cursor: pointer; font: 11px/1 system-ui, sans-serif; }`,
         `@supports not (backdrop-filter: blur(3px)) { [data-${ACTION_ID}] button, [data-${RAIL_ID}] [data-quote-pill] { background: var(--dsw-alias-bg-layer-1, #fff); } }`,
         `@supports (anchor-name: --dsh-add-to-chat-anchor) { [data-${PREVIEW_ID}][data-anchored] { top: anchor(bottom); left: anchor(center); transform: translate(-50%, 8px); position-try-fallbacks: flip-block, flip-inline; } }`,
@@ -57,13 +61,6 @@ window.__ModuleLoader__.load({
     function compactLabel(text) {
       const firstLine = text.trim().replace(/\s+/gu, ' ').slice(0, 28)
       return firstLine === '' ? '助手引用' : `引用：${firstLine}`
-    }
-
-    function detectEnd(snapshot) {
-      return snapshot.draft.length - snapshot.occurrences.reduce(
-        (size, occurrence) => size + occurrence.length - 1,
-        0,
-      )
     }
 
     function referenceId() {
@@ -88,23 +85,21 @@ window.__ModuleLoader__.load({
 
       const preview = document.createElement('div')
       preview.setAttribute(`data-${PREVIEW_ID}`, '')
+      preview.setAttribute('data-quote-preview-list', '')
       preview.hidden = true
       document.body.appendChild(preview)
 
       let selectedText = ''
       let selectedRange = null
-      let observedInput = null
-      let inputOff = null
       let previewTimer = null
+      let previewAnchor = null
       const quotes = new Map()
+      const sessionQuotes = new Map()
       const markers = new Map()
 
-      function decorateQuoteChips() {
-        const labels = new Set([...quotes.values()].map(quote => quote.label))
-        if (labels.size === 0) return
-        for (const chip of document.querySelectorAll('[contenteditable="true"] [title]')) {
-          if (labels.has(chip.getAttribute('title'))) chip.setAttribute(`data-${CHIP_ID}`, '')
-        }
+      function cancelPreviewHide() {
+        if (previewTimer !== null) clearTimeout(previewTimer)
+        previewTimer = null
       }
 
       function hideAction() {
@@ -135,52 +130,78 @@ window.__ModuleLoader__.load({
         action.hidden = false
       }
 
-      function currentInput() {
-        const sessionId = ctx.sessions.list.getSnapshot().current
-        const scope = sessionId === undefined ? undefined : ctx.sessions.scope(sessionId)
-        return scope === undefined ? undefined : ctx.conversation.input.for(scope)
-      }
-
       function positionPreview(anchor) {
         const bounds = anchor.getBoundingClientRect()
-        preview.style.left = `${Math.max(12, Math.min(bounds.left + bounds.width / 2, window.innerWidth - 12))}px`
-        preview.style.top = `${Math.min(window.innerHeight - 12, bounds.bottom + 8)}px`
-        preview.style.transform = 'translateX(-50%)'
+        const margin = 12
+        const gap = 8
+        const previewBounds = preview.getBoundingClientRect()
+        const left = Math.max(margin, Math.min(bounds.left, window.innerWidth - previewBounds.width - margin))
+        const below = bounds.bottom + gap
+        const above = bounds.top - previewBounds.height - gap
+        const top = below + previewBounds.height <= window.innerHeight - margin || above < margin ? below : above
+        preview.style.left = `${left}px`
+        preview.style.top = `${Math.max(margin, Math.min(top, window.innerHeight - previewBounds.height - margin))}px`
+        preview.style.transform = 'none'
+      }
+
+      function repositionPreview() {
+        if (preview.hidden || previewAnchor === null || !previewAnchor.isConnected) return
+        positionPreview(previewAnchor)
       }
 
       function hidePreviewSoon() {
-        if (previewTimer !== null) clearTimeout(previewTimer)
+        cancelPreviewHide()
         previewTimer = setTimeout(() => {
           preview.hidden = true
           preview.textContent = ''
+          previewAnchor = null
           previewTimer = null
         }, 80)
       }
 
       function showPreview(occurrences, anchor) {
-        if (previewTimer !== null) clearTimeout(previewTimer)
-        previewTimer = null
+        cancelPreviewHide()
         preview.textContent = ''
         for (const occurrence of occurrences) {
-          const quote = quotes.get(occurrence.ref)
-          if (quote === undefined) continue
+          const quote = quotes.get(occurrence.ref) || {
+            ref: occurrence.ref,
+            text: occurrence.clipboardText,
+            label: occurrence.label,
+          }
           const item = document.createElement('div')
           item.setAttribute('data-quote-preview-item', '')
           const text = document.createElement('div')
           text.setAttribute('data-quote-preview-text', '')
           text.textContent = quote.text
+          const content = document.createElement('div')
+          content.setAttribute('data-quote-preview-content', '')
+          const label = document.createElement('div')
+          label.setAttribute('data-quote-preview-label', '')
+          label.textContent = '所选文本：'
           const remove = document.createElement('button')
           remove.type = 'button'
           remove.textContent = '×'
+          remove.setAttribute('data-quote-preview-remove', '')
           remove.setAttribute('aria-label', '删除引用')
-          remove.addEventListener('click', () => { removeQuote(occurrence) })
-          item.append(text, remove)
+          remove.addEventListener('click', () => { removeQuote(occurrence.ref) })
+          content.append(label, text)
+          item.append(content, remove)
           preview.appendChild(item)
         }
         if (!preview.hasChildNodes()) return
-        positionPreview(anchor)
+        previewAnchor = anchor
+        preview.style.visibility = 'hidden'
         preview.hidden = false
+        positionPreview(anchor)
+        preview.style.visibility = ''
       }
+
+      preview.addEventListener('mouseenter', cancelPreviewHide)
+      preview.addEventListener('mouseleave', hidePreviewSoon)
+      preview.addEventListener('focusin', cancelPreviewHide)
+      preview.addEventListener('focusout', hidePreviewSoon)
+      window.addEventListener('resize', repositionPreview, { passive: true })
+      document.addEventListener('scroll', repositionPreview, true)
 
       function removeMarker(ref) {
         const marker = markers.get(ref)
@@ -213,6 +234,11 @@ window.__ModuleLoader__.load({
       }
 
       function createMarker(quote, range) {
+        const existing = markers.get(quote.ref)
+        if (existing !== undefined) {
+          positionMarker(existing)
+          return
+        }
         if (range === null) return
         const markerButton = document.createElement('button')
         markerButton.type = 'button'
@@ -241,34 +267,32 @@ window.__ModuleLoader__.load({
         positionMarker(marker)
       }
 
-      function removeQuote(occurrence) {
-        const input = currentInput()
-        const removed = input?.removeReference?.(occurrence.occurrenceId) === true
-          || removeReferenceWithTextEdit(input, occurrence)
-        if (!removed) return
-        quotes.delete(occurrence.ref)
-        removeMarker(occurrence.ref)
+      function currentSessionId() {
+        return ctx.sessions.list.getSnapshot().current
+      }
+
+      function quoteRefs(sessionId) {
+        return sessionId === undefined ? [] : sessionQuotes.get(sessionId) || []
+      }
+
+      function removeQuote(ref) {
+        const quote = quotes.get(ref)
+        if (quote === undefined) return
+        const refs = quoteRefs(quote.sessionId).filter(candidate => candidate !== ref)
+        if (refs.length === 0) sessionQuotes.delete(quote.sessionId)
+        else sessionQuotes.set(quote.sessionId, refs)
+        quotes.delete(ref)
+        removeMarker(ref)
         refreshQuoteRail()
       }
 
-      function removeReferenceWithTextEdit(input, occurrence) {
-        const snapshot = input?.state.getSnapshot()
-        if (!snapshot || typeof occurrence.offset !== 'number' || typeof occurrence.length !== 'number') return false
-        const index = snapshot.occurrences.findIndex(candidate => candidate.occurrenceId === occurrence.occurrenceId)
-        if (index < 0) return false
-        let start = occurrence.offset
-        for (const candidate of snapshot.occurrences.slice(0, index)) start -= candidate.length - 1
-        return input.insertText?.('', { start, end: start + 1, draftRev: snapshot.draftRev }) === true
-      }
-
       function refreshQuoteRail() {
-        const input = currentInput()
-        const occurrences = input?.state.getSnapshot().occurrences.filter(
-          occurrence => occurrence.source === QUOTE_SOURCE,
-        ) || []
+        const sessionId = currentSessionId()
+        const occurrences = quoteRefs(sessionId).map(ref => quotes.get(ref)).filter(Boolean)
         for (const ref of markers.keys()) {
-          if (!occurrences.some(occurrence => occurrence.ref === ref)) removeMarker(ref)
+          if (!occurrences.some(quote => quote.ref === ref)) removeMarker(ref)
         }
+        for (const quote of occurrences) createMarker(quote, quote.range)
         rail.textContent = ''
         if (occurrences.length === 0) {
           rail.hidden = true
@@ -283,7 +307,8 @@ window.__ModuleLoader__.load({
         const pill = document.createElement('button')
         pill.type = 'button'
         pill.setAttribute('data-quote-pill', '')
-        pill.textContent = `引用 ${occurrences.length} 条`
+        pill.textContent = `${occurrences.length} 条注释`
+        pill.setAttribute('aria-label', `管理 ${occurrences.length} 条注释`)
         pill.addEventListener('mouseenter', () => { showPreview(occurrences, pill) })
         pill.addEventListener('mouseleave', hidePreviewSoon)
         pill.addEventListener('focus', () => { showPreview(occurrences, pill) })
@@ -298,7 +323,7 @@ window.__ModuleLoader__.load({
         removeAll.textContent = '×'
         removeAll.setAttribute('aria-label', '删除全部引用')
         removeAll.addEventListener('click', () => {
-          for (const occurrence of occurrences) removeQuote(occurrence)
+          for (const occurrence of occurrences) removeQuote(occurrence.ref)
         })
         rail.append(pill, removeAll)
         const bounds = card.getBoundingClientRect()
@@ -307,37 +332,16 @@ window.__ModuleLoader__.load({
         rail.hidden = false
       }
 
-      function observeCurrentInput() {
-        const input = currentInput()
-        if (input === observedInput) return
-        inputOff?.()
-        observedInput = input
-        inputOff = input?.state.subscribe(refreshQuoteRail) || null
-        refreshQuoteRail()
-      }
-
       function addToDraft() {
-        const input = currentInput()
-        if (!input || selectedText === '') return
-        const snapshot = input.state.getSnapshot()
+        const sessionId = currentSessionId()
+        if (sessionId === undefined || selectedText === '') return
         const ref = referenceId()
-        const quote = { ref, text: selectedText, label: compactLabel(selectedText) }
+        const quote = { ref, sessionId, text: selectedText, label: compactLabel(selectedText), range: selectedRange }
         quotes.set(ref, quote)
-        const end = detectEnd(snapshot)
-        const inserted = input.insertReference({
-          source: QUOTE_SOURCE,
-          ref,
-          label: quote.label,
-          clipboardText: selectedText,
-        }, { start: end, end, draftRev: snapshot.draftRev })
-        if (!inserted) {
-          quotes.delete(ref)
-          return
-        }
+        sessionQuotes.set(sessionId, [...quoteRefs(sessionId), ref])
         createMarker(quote, selectedRange)
         window.getSelection()?.removeAllRanges()
         hideAction()
-        requestAnimationFrame(decorateQuoteChips)
         refreshQuoteRail()
       }
 
@@ -353,30 +357,41 @@ window.__ModuleLoader__.load({
         for (const marker of markers.values()) positionMarker(marker)
       }
       const source = {
-        trigger: '@',
-        name: QUOTE_SOURCE,
-        candidates: async () => [],
-        onPick: () => undefined,
-        codec: {
-          clipboardText: ref => quotes.get(ref)?.text || '',
-          serialize: async ref => {
+        id: PLUGIN_ID,
+        has: sessionId => quoteRefs(sessionId).length > 0,
+        take: sessionId => {
+          const refs = quoteRefs(sessionId)
+          if (refs.length === 0) return []
+          sessionQuotes.delete(sessionId)
+          const taken = refs.map(ref => quotes.get(ref)).filter(Boolean)
+          for (const quote of taken) removeMarker(quote.ref)
+          refreshQuoteRail()
+          return taken.map(quote => ({ id: quote.ref, plugin: PLUGIN_ID, text: `${QUOTE_LABEL}\n${quote.text}` }))
+        },
+        settle: (sessionId, items, accepted) => {
+          if (accepted || items.length === 0) return
+          const refs = items.map(item => item.id).filter(ref => quotes.has(ref))
+          if (refs.length === 0) return
+          sessionQuotes.set(sessionId, [...refs, ...quoteRefs(sessionId)])
+          for (const ref of refs) {
             const quote = quotes.get(ref)
-            if (quote === undefined) throw new Error('assistant quote is no longer available')
-            return `${QUOTE_LABEL}\n${quote.text}`
-          },
+            if (quote !== undefined) createMarker(quote, quote.range)
+          }
+          refreshQuoteRail()
         },
       }
-      ctx.effect(() => ctx.inputTriggers.registerSource(source), 'dsh-add-to-chat: quote serializer')
+      if (ctx.conversation?.draftContexts === undefined) {
+        throw new Error('dsh-add-to-chat requires DSH draft-context support')
+      }
+      ctx.effect(() => ctx.conversation.draftContexts.register(source), 'dsh-add-to-chat: draft contexts')
       button.addEventListener('click', addToDraft)
       document.addEventListener('selectionchange', updateAction)
       document.addEventListener('pointerdown', onPointerDown, true)
       document.addEventListener('keydown', onKeyDown, true)
       window.addEventListener('resize', onViewportChange)
       window.addEventListener('scroll', onViewportChange, true)
-      const chipObserver = new MutationObserver(decorateQuoteChips)
-      chipObserver.observe(document.body, { childList: true, subtree: true })
-      const sessionsOff = ctx.sessions.list.subscribe(observeCurrentInput)
-      observeCurrentInput()
+      const sessionsOff = ctx.sessions.list.subscribe(refreshQuoteRail)
+      refreshQuoteRail()
 
       return () => {
         button.removeEventListener('click', addToDraft)
@@ -385,9 +400,9 @@ window.__ModuleLoader__.load({
         document.removeEventListener('keydown', onKeyDown, true)
         window.removeEventListener('resize', onViewportChange)
         window.removeEventListener('scroll', onViewportChange, true)
-        chipObserver.disconnect()
         sessionsOff()
-        inputOff?.()
+        window.removeEventListener('resize', repositionPreview)
+        document.removeEventListener('scroll', repositionPreview, true)
         action.remove()
         rail.remove()
         preview.remove()
@@ -399,8 +414,8 @@ window.__ModuleLoader__.load({
     }
 
     return {
-      name: 'dsh-add-to-chat',
-      inject: ['sessions', 'conversation', 'inputTriggers'],
+      name: PLUGIN_ID,
+      inject: ['sessions', 'conversation'],
       apply,
     }
   },
