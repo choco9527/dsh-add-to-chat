@@ -28,6 +28,7 @@ test('client source submits plugin-owned draft context instead of touching the e
 
 test('plugin metadata requests the conversation client without the obsolete input trigger', async () => {
   const manifest = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+  assert.ok(manifest.dsh.client.inject.includes('@deepseek-ai/dsh-client-locale'))
   assert.ok(manifest.dsh.client.inject.includes('@deepseek-ai/dsh-client-ui-conversation'))
   assert.ok(!manifest.dsh.client.inject.includes('@deepseek-ai/dsh-client-ui-input-trigger'))
 })
@@ -51,9 +52,20 @@ test('reference preview uses numbered cards and keeps each reference removable',
   const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
   assert.match(source, /data-quote-preview-list/)
   assert.match(source, /content: counter\(dsh-add-to-chat-quote\) '\.'/)
-  assert.match(source, /label\.textContent = '所选文本：'/)
+  assert.match(source, /label\.textContent = t\('selectedText'\)/)
   assert.match(source, /data-quote-preview-remove/)
   assert.match(source, /remove\.addEventListener\('click', \(\) => \{ removeQuote\(occurrence\.ref\) \}\)/)
+})
+
+test('client registers bilingual copy and refreshes existing controls on locale changes', async () => {
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  assert.match(source, /const zh = Object\.freeze\(/)
+  assert.match(source, /const en = Object\.freeze\(/)
+  assert.match(source, /ctx\.locale\.register\(LOCALE_NS, \{ zh, en \}\)/)
+  assert.match(source, /ctx\.locale\.subscribe\(refreshLocalizedCopy\)/)
+  assert.match(source, /button\.textContent = t\('add'\)/)
+  assert.match(source, /text: `\$\{t\('contextLabel'\)\}\\n\$\{quote\.text\}`/)
+  assert.doesNotMatch(source, /button\.textContent = '添加到对话'/)
 })
 
 test('failed prompt settlement restores selected text to its source list', async () => {

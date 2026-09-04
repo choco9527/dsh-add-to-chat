@@ -27,10 +27,11 @@ English: [README.en.md](README.en.md)
 - “x 条注释”悬浮卡片展示完整原文，支持逐条删除及全部删除。
 - 不向 Lexical 编辑器写入 Markdown、隐藏节点或 Chip，因此不会因 Backspace 误删。
 - 注释待发送时，原助手选区附近保留一个小标记。
+- 界面文案跟随 DSH 当前语言，支持中文和英文，并在切换语言后立即刷新。
 
 ## 兼容性
 
-插件只依赖两个语义扩展点：助手正文的 `data-dsh-message-role="assistant"` 标记，以及 `conversation.draftContexts` 提交服务。它不依赖页面 CSS class，也不要求 Host 服务或产品专用代码。
+插件只依赖三个语义扩展点：助手正文的 `data-dsh-message-role="assistant"` 标记、`conversation.draftContexts` 提交服务及 DSH locale 服务。它不依赖页面 CSS class，也不要求 Host 服务或产品专用代码。
 
 ## 安装
 

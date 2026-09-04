@@ -26,10 +26,11 @@ Select text in a DSH assistant reply and choose **Add to chat**. The plugin keep
 - The “x annotations” hover card shows the full source text and supports individual or bulk removal.
 - It never writes Markdown, hidden nodes, or chips into the Lexical editor, so Backspace cannot remove an annotation by accident.
 - A small marker remains beside the original selection while its annotation awaits submission.
+- Interface copy follows the active DSH locale, supports Chinese and English, and refreshes immediately after a language switch.
 
 ## Compatibility
 
-The plugin relies on two semantic extensions only: an assistant body marked with `data-dsh-message-role="assistant"`, and the `conversation.draftContexts` submission service. It does not depend on page CSS classes, a Host service, or product-specific code.
+The plugin relies on three semantic extensions only: an assistant body marked with `data-dsh-message-role="assistant"`, the `conversation.draftContexts` submission service, and the DSH locale service. It does not depend on page CSS classes, a Host service, or product-specific code.
 
 ## Install
 

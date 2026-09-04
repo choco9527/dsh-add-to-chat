@@ -11,9 +11,37 @@ window.__ModuleLoader__.load({
     const PREVIEW_ID = 'dsh-add-to-chat-preview'
     const MARKER_ID = 'dsh-add-to-chat-marker'
     const PLUGIN_ID = 'dsh-add-to-chat'
+    const LOCALE_NS = 'add-to-chat'
     const ASSISTANT_REPLY_SELECTOR = '[data-dsh-message-role="assistant"]'
-    const QUOTE_LABEL = '引用助手回复：'
     const CARD_SELECTOR = '[data-composer-card]'
+    const zh = Object.freeze({
+      add: '添加到对话',
+      selectedText: '所选文本：',
+      removeReference: '删除引用',
+      addedOne: '已添加 1 条引用',
+      annotationOne: '1 条注释',
+      annotationMany: '{count} 条注释',
+      manageOne: '管理 1 条注释',
+      manageMany: '管理 {count} 条注释',
+      removeAll: '删除全部引用',
+      emptyQuote: '助手引用',
+      quotePrefix: '引用：{text}',
+      contextLabel: '引用助手回复：',
+    })
+    const en = Object.freeze({
+      add: 'Add to chat',
+      selectedText: 'Selected text:',
+      removeReference: 'Remove reference',
+      addedOne: '1 reference added',
+      annotationOne: '1 annotation',
+      annotationMany: '{count} annotations',
+      manageOne: 'Manage 1 annotation',
+      manageMany: 'Manage {count} annotations',
+      removeAll: 'Remove all references',
+      emptyQuote: 'Assistant quote',
+      quotePrefix: 'Quote: {text}',
+      contextLabel: 'Quoted assistant reply:',
+    })
 
     function installStyle() {
       if (document.getElementById(STYLE_ID)) return
@@ -58,9 +86,9 @@ window.__ModuleLoader__.load({
       return anchor !== undefined && anchor !== null && anchor === assistantReply(selection.focusNode)
     }
 
-    function compactLabel(text) {
+    function compactLabel(text, t) {
       const firstLine = text.trim().replace(/\s+/gu, ' ').slice(0, 28)
-      return firstLine === '' ? '助手引用' : `引用：${firstLine}`
+      return firstLine === '' ? t('emptyQuote') : t('quotePrefix', { text: firstLine })
     }
 
     function referenceId() {
@@ -68,13 +96,15 @@ window.__ModuleLoader__.load({
     }
 
     function apply(ctx) {
+      ctx.effect(() => ctx.locale.register(LOCALE_NS, { zh, en }), 'dsh-add-to-chat: locale')
+      const t = ctx.locale.bind(LOCALE_NS)
       installStyle()
       const action = document.createElement('div')
       action.setAttribute(`data-${ACTION_ID}`, '')
       action.hidden = true
       const button = document.createElement('button')
       button.type = 'button'
-      button.textContent = '添加到对话'
+      button.textContent = t('add')
       action.appendChild(button)
       document.body.appendChild(action)
 
@@ -177,12 +207,12 @@ window.__ModuleLoader__.load({
           content.setAttribute('data-quote-preview-content', '')
           const label = document.createElement('div')
           label.setAttribute('data-quote-preview-label', '')
-          label.textContent = '所选文本：'
+          label.textContent = t('selectedText')
           const remove = document.createElement('button')
           remove.type = 'button'
           remove.textContent = '×'
           remove.setAttribute('data-quote-preview-remove', '')
-          remove.setAttribute('aria-label', '删除引用')
+          remove.setAttribute('aria-label', t('removeReference'))
           remove.addEventListener('click', () => { removeQuote(occurrence.ref) })
           content.append(label, text)
           item.append(content, remove)
@@ -244,7 +274,7 @@ window.__ModuleLoader__.load({
         markerButton.type = 'button'
         markerButton.setAttribute(`data-${MARKER_ID}`, '')
         markerButton.textContent = '1'
-        markerButton.setAttribute('aria-label', '已添加 1 条引用')
+        markerButton.setAttribute('aria-label', t('addedOne'))
         const markerPreview = document.createElement('div')
         markerPreview.setAttribute(`data-${PREVIEW_ID}`, '')
         markerPreview.textContent = quote.text
@@ -307,8 +337,10 @@ window.__ModuleLoader__.load({
         const pill = document.createElement('button')
         pill.type = 'button'
         pill.setAttribute('data-quote-pill', '')
-        pill.textContent = `${occurrences.length} 条注释`
-        pill.setAttribute('aria-label', `管理 ${occurrences.length} 条注释`)
+        const annotationKey = occurrences.length === 1 ? 'annotationOne' : 'annotationMany'
+        const manageKey = occurrences.length === 1 ? 'manageOne' : 'manageMany'
+        pill.textContent = t(annotationKey, { count: occurrences.length })
+        pill.setAttribute('aria-label', t(manageKey, { count: occurrences.length }))
         pill.addEventListener('mouseenter', () => { showPreview(occurrences, pill) })
         pill.addEventListener('mouseleave', hidePreviewSoon)
         pill.addEventListener('focus', () => { showPreview(occurrences, pill) })
@@ -321,7 +353,7 @@ window.__ModuleLoader__.load({
         removeAll.type = 'button'
         removeAll.setAttribute('data-quote-remove-all', '')
         removeAll.textContent = '×'
-        removeAll.setAttribute('aria-label', '删除全部引用')
+        removeAll.setAttribute('aria-label', t('removeAll'))
         removeAll.addEventListener('click', () => {
           for (const occurrence of occurrences) removeQuote(occurrence.ref)
         })
@@ -332,11 +364,21 @@ window.__ModuleLoader__.load({
         rail.hidden = false
       }
 
+      function refreshLocalizedCopy() {
+        button.textContent = t('add')
+        cancelPreviewHide()
+        preview.hidden = true
+        preview.textContent = ''
+        previewAnchor = null
+        for (const marker of markers.values()) marker.button.setAttribute('aria-label', t('addedOne'))
+        refreshQuoteRail()
+      }
+
       function addToDraft() {
         const sessionId = currentSessionId()
         if (sessionId === undefined || selectedText === '') return
         const ref = referenceId()
-        const quote = { ref, sessionId, text: selectedText, label: compactLabel(selectedText), range: selectedRange }
+        const quote = { ref, sessionId, text: selectedText, label: compactLabel(selectedText, t), range: selectedRange }
         quotes.set(ref, quote)
         sessionQuotes.set(sessionId, [...quoteRefs(sessionId), ref])
         createMarker(quote, selectedRange)
@@ -369,7 +411,7 @@ window.__ModuleLoader__.load({
           return taken.map(quote => ({
             id: quote.ref,
             plugin: PLUGIN_ID,
-            text: `${QUOTE_LABEL}\n${quote.text}`,
+            text: `${t('contextLabel')}\n${quote.text}`,
             form: 'annotation',
           }))
         },
@@ -396,6 +438,7 @@ window.__ModuleLoader__.load({
       window.addEventListener('resize', onViewportChange)
       window.addEventListener('scroll', onViewportChange, true)
       const sessionsOff = ctx.sessions.list.subscribe(refreshQuoteRail)
+      const localeOff = ctx.locale.subscribe(refreshLocalizedCopy)
       refreshQuoteRail()
 
       return () => {
@@ -406,6 +449,7 @@ window.__ModuleLoader__.load({
         window.removeEventListener('resize', onViewportChange)
         window.removeEventListener('scroll', onViewportChange, true)
         sessionsOff()
+        localeOff()
         window.removeEventListener('resize', repositionPreview)
         document.removeEventListener('scroll', repositionPreview, true)
         action.remove()
@@ -420,7 +464,7 @@ window.__ModuleLoader__.load({
 
     return {
       name: PLUGIN_ID,
-      inject: ['sessions', 'conversation'],
+      inject: ['sessions', 'conversation', 'locale'],
       apply,
     }
   },
