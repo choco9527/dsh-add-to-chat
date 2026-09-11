@@ -12,6 +12,10 @@ window.__ModuleLoader__.load({
     const MARKER_ID = 'dsh-add-to-chat-marker'
     const PLUGIN_ID = 'dsh-add-to-chat'
     const LOCALE_NS = 'add-to-chat'
+    // Reference-source identity. The composer routes every chip this plugin
+    // inserts back to the codec below by this name, so it doubles as the
+    // filter that separates our occurrences from other sources' chips.
+    const QUOTE_SOURCE = 'dsh-add-to-chat-quote'
     const ASSISTANT_REPLY_SELECTOR = '[data-dsh-message-role="assistant"]'
     const CARD_SELECTOR = '[data-composer-card]'
     const zh = Object.freeze({
@@ -95,6 +99,21 @@ window.__ModuleLoader__.load({
       return globalThis.crypto?.randomUUID?.() || `quote-${Date.now()}-${Math.random().toString(36).slice(2)}`
     }
 
+    /**
+     * Caret offset of the draft end in *editor* coordinates.
+     *
+     * `state.draft` is the clipboard projection, where each chip contributes
+     * its whole `clipboardText`; the editor counts every chip as one
+     * placeholder character. Collapsing that difference gives the span the
+     * editor accepts for an append.
+     */
+    function detectEnd(snapshot) {
+      return snapshot.draft.length - snapshot.occurrences.reduce(
+        (size, occurrence) => size + occurrence.length - 1,
+        0,
+      )
+    }
+
     function apply(ctx) {
       ctx.effect(() => ctx.locale.register(LOCALE_NS, { zh, en }), 'dsh-add-to-chat: locale')
       const t = ctx.locale.bind(LOCALE_NS)
@@ -123,8 +142,12 @@ window.__ModuleLoader__.load({
       let selectedRange = null
       let previewTimer = null
       let previewAnchor = null
+      let observedInput = null
+      let inputOff = null
+      // Quote bodies keyed by reference id. The composer owns *where* each
+      // reference sits and how many there are; this map only remembers the
+      // text behind one, which the codec needs to answer with at send time.
       const quotes = new Map()
-      const sessionQuotes = new Map()
       const markers = new Map()
 
       function cancelPreviewHide() {
@@ -301,28 +324,54 @@ window.__ModuleLoader__.load({
         return ctx.sessions.list.getSnapshot().current
       }
 
-      function quoteRefs(sessionId) {
-        return sessionId === undefined ? [] : sessionQuotes.get(sessionId) || []
+      /**
+       * The composer input facade of the selected session, or undefined when
+       * no session is selected. Session-addressed on every call: a facade
+       * captured across a session switch would edit the wrong composer.
+       */
+      function currentInput() {
+        const sessionId = currentSessionId()
+        const scope = sessionId === undefined ? undefined : ctx.sessions.scope(sessionId)
+        return scope === undefined ? undefined : ctx.conversation.input.for(scope)
       }
 
+      /** This plugin's chips in the live draft, in document order. */
+      function quoteOccurrences(input) {
+        return input?.state.getSnapshot().occurrences.filter(
+          occurrence => occurrence.source === QUOTE_SOURCE,
+        ) || []
+      }
+
+      /**
+       * Delete one chip by replacing its single editor placeholder character
+       * with nothing. Offsets arrive in clipboard coordinates, so preceding
+       * chips are collapsed back to one character each first.
+       */
       function removeQuote(ref) {
-        const quote = quotes.get(ref)
-        if (quote === undefined) return
-        const refs = quoteRefs(quote.sessionId).filter(candidate => candidate !== ref)
-        if (refs.length === 0) sessionQuotes.delete(quote.sessionId)
-        else sessionQuotes.set(quote.sessionId, refs)
+        const input = currentInput()
+        const snapshot = input?.state.getSnapshot()
+        if (snapshot === undefined) return
+        const index = snapshot.occurrences.findIndex(
+          occurrence => occurrence.source === QUOTE_SOURCE && occurrence.ref === ref,
+        )
+        if (index < 0) return
+        let start = snapshot.occurrences[index].offset
+        for (const earlier of snapshot.occurrences.slice(0, index)) start -= earlier.length - 1
+        if (input.insertText('', { start, end: start + 1, draftRev: snapshot.draftRev }) !== true) return
         quotes.delete(ref)
         removeMarker(ref)
         refreshQuoteRail()
       }
 
       function refreshQuoteRail() {
-        const sessionId = currentSessionId()
-        const occurrences = quoteRefs(sessionId).map(ref => quotes.get(ref)).filter(Boolean)
+        const occurrences = quoteOccurrences(currentInput())
         for (const ref of markers.keys()) {
-          if (!occurrences.some(quote => quote.ref === ref)) removeMarker(ref)
+          if (!occurrences.some(occurrence => occurrence.ref === ref)) removeMarker(ref)
         }
-        for (const quote of occurrences) createMarker(quote, quote.range)
+        for (const occurrence of occurrences) {
+          const quote = quotes.get(occurrence.ref)
+          if (quote !== undefined) createMarker(quote, quote.range)
+        }
         rail.textContent = ''
         if (occurrences.length === 0) {
           rail.hidden = true
@@ -374,13 +423,33 @@ window.__ModuleLoader__.load({
         refreshQuoteRail()
       }
 
+      /**
+       * Append the selection to the composer as one visible reference chip.
+       *
+       * The chip is the single source of truth for presence and order: the
+       * editor deletes it whole on Backspace, and the codec below expands it
+       * to model text at send time. The quote body is only remembered so the
+       * codec can answer, and it is dropped again if the editor refuses the
+       * span (a stale revision, or a phase that rejects edits).
+       */
       function addToDraft() {
-        const sessionId = currentSessionId()
-        if (sessionId === undefined || selectedText === '') return
+        const input = currentInput()
+        if (input === undefined || selectedText === '') return
+        const snapshot = input.state.getSnapshot()
         const ref = referenceId()
-        const quote = { ref, sessionId, text: selectedText, label: compactLabel(selectedText, t), range: selectedRange }
+        const quote = { ref, text: selectedText, label: compactLabel(selectedText, t), range: selectedRange }
         quotes.set(ref, quote)
-        sessionQuotes.set(sessionId, [...quoteRefs(sessionId), ref])
+        const end = detectEnd(snapshot)
+        const inserted = input.insertReference({
+          source: QUOTE_SOURCE,
+          ref,
+          label: quote.label,
+          clipboardText: quote.label,
+        }, { start: end, end, draftRev: snapshot.draftRev })
+        if (inserted !== true) {
+          quotes.delete(ref)
+          return
+        }
         createMarker(quote, selectedRange)
         window.getSelection()?.removeAllRanges()
         hideAction()
@@ -398,48 +467,53 @@ window.__ModuleLoader__.load({
         refreshQuoteRail()
         for (const marker of markers.values()) positionMarker(marker)
       }
+
+      /**
+       * Follow the selected session's input state. The rail is a projection of
+       * that state, so the subscription has to move with the session rather
+       * than the plugin holding its own copy of what is in the draft.
+       */
+      function observeCurrentInput() {
+        const input = currentInput()
+        if (input === observedInput) return
+        inputOff?.()
+        observedInput = input
+        inputOff = input?.state.subscribe(refreshQuoteRail) || null
+        refreshQuoteRail()
+      }
+      /**
+       * Reference source owning this plugin's chips.
+       *
+       * It never contributes menu candidates: the '@' menu is not how a quote
+       * is created, the selection toolbar is. Registration exists so the
+       * composer can route a chip back here at send time, which `codec`
+       * answers — `serialize` produces the model text and `clipboardText`
+       * the copy/persistence projection.
+       */
       const source = {
-        id: PLUGIN_ID,
-        has: sessionId => quoteRefs(sessionId).length > 0,
-        take: sessionId => {
-          const refs = quoteRefs(sessionId)
-          if (refs.length === 0) return []
-          sessionQuotes.delete(sessionId)
-          const taken = refs.map(ref => quotes.get(ref)).filter(Boolean)
-          for (const quote of taken) removeMarker(quote.ref)
-          refreshQuoteRail()
-          return taken.map(quote => ({
-            id: quote.ref,
-            plugin: PLUGIN_ID,
-            text: `${t('contextLabel')}\n${quote.text}`,
-            form: 'annotation',
-          }))
-        },
-        settle: (sessionId, items, accepted) => {
-          if (accepted || items.length === 0) return
-          const refs = items.map(item => item.id).filter(ref => quotes.has(ref))
-          if (refs.length === 0) return
-          sessionQuotes.set(sessionId, [...refs, ...quoteRefs(sessionId)])
-          for (const ref of refs) {
+        trigger: '@',
+        name: QUOTE_SOURCE,
+        candidates: async () => [],
+        onPick: () => undefined,
+        codec: {
+          clipboardText: ref => quotes.get(ref)?.label || '',
+          serialize: async ref => {
             const quote = quotes.get(ref)
-            if (quote !== undefined) createMarker(quote, quote.range)
-          }
-          refreshQuoteRail()
+            if (quote === undefined) throw new Error('assistant quote is no longer available')
+            return `${t('contextLabel')}\n${quote.text}`
+          },
         },
       }
-      if (ctx.conversation?.draftContexts === undefined) {
-        throw new Error('dsh-add-to-chat requires DSH draft-context support')
-      }
-      ctx.effect(() => ctx.conversation.draftContexts.register(source), 'dsh-add-to-chat: draft contexts')
+      ctx.effect(() => ctx.inputTriggers.registerSource(source), 'dsh-add-to-chat: quote serializer')
       button.addEventListener('click', addToDraft)
       document.addEventListener('selectionchange', updateAction)
       document.addEventListener('pointerdown', onPointerDown, true)
       document.addEventListener('keydown', onKeyDown, true)
       window.addEventListener('resize', onViewportChange)
       window.addEventListener('scroll', onViewportChange, true)
-      const sessionsOff = ctx.sessions.list.subscribe(refreshQuoteRail)
+      const sessionsOff = ctx.sessions.list.subscribe(observeCurrentInput)
       const localeOff = ctx.locale.subscribe(refreshLocalizedCopy)
-      refreshQuoteRail()
+      observeCurrentInput()
 
       return () => {
         button.removeEventListener('click', addToDraft)
@@ -450,6 +524,7 @@ window.__ModuleLoader__.load({
         window.removeEventListener('scroll', onViewportChange, true)
         sessionsOff()
         localeOff()
+        inputOff?.()
         window.removeEventListener('resize', repositionPreview)
         document.removeEventListener('scroll', repositionPreview, true)
         action.remove()
@@ -464,7 +539,7 @@ window.__ModuleLoader__.load({
 
     return {
       name: PLUGIN_ID,
-      inject: ['sessions', 'conversation', 'locale'],
+      inject: ['sessions', 'conversation', 'inputTriggers', 'locale'],
       apply,
     }
   },
