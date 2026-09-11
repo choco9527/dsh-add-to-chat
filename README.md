@@ -31,7 +31,7 @@ English: [README.en.md](README.en.md)
 
 ## 兼容性
 
-插件只依赖三个语义扩展点：助手正文的 `data-dsh-message-role="assistant"` 标记、`conversation.input` 引用插入面与 `inputTriggers` 引用编解码器，以及 DSH locale 服务。它不依赖页面 CSS class，也不要求 Host 服务或产品专用代码。
+插件只依赖三个语义扩展点：助手正文的 `data-dsh-message-role="assistant"` 标记、`conversation.draftContexts` 提交服务及 DSH locale 服务。它不依赖页面 CSS class，也不要求 Host 服务或产品专用代码。
 
 ## 安装
 

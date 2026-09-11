@@ -30,7 +30,7 @@ Select text in a DSH assistant reply and choose **Add to chat**. The plugin keep
 
 ## Compatibility
 
-The plugin relies on three semantic extensions only: an assistant body marked with `data-dsh-message-role="assistant"`, the `conversation.input` reference-insertion face together with the `inputTriggers` reference codec, and the DSH locale service. It does not depend on page CSS classes, a Host service, or product-specific code.
+The plugin relies on three semantic extensions only: an assistant body marked with `data-dsh-message-role="assistant"`, the `conversation.draftContexts` submission service, and the DSH locale service. It does not depend on page CSS classes, a Host service, or product-specific code.
 
 ## Install
 
