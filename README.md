@@ -25,8 +25,9 @@ English: [README.en.md](README.en.md)
 - 每次选区限于同一条助手回复，可连续添加多条注释。
 - 不自动发送；用户可继续编辑普通草稿，或只发送注释。
 - “x 条注释”悬浮卡片展示完整原文，支持逐条删除及全部删除。
+- 待发送注释卡片优先向上展开，空间不足时向下展开；悬浮层高于输入框，详情与删除按钮不会被输入框遮挡。
 - 不向 Lexical 编辑器写入 Markdown、隐藏节点或 Chip，因此不会因 Backspace 误删。
-- 注释待发送时，原助手选区附近保留一个小标记。
+- 注释待发送时，原助手选区附近保留数字标记，不弹出原文；详情统一在输入框上方的“条注释”卡片查看。
 - 界面文案跟随 DSH 当前语言，支持中文和英文，并在切换语言后立即刷新。
 
 ## 兼容性
@@ -50,6 +51,8 @@ dsh plugin --profile web add .
 ```
 
 安装后重启目标 DSH Profile。不要再手动把同一插件 id 写入 Profile 的 `cordis.patch.yml`，bundle 已自行注册。
+
+浏览器遮挡回归：使用已安装的 Playwright 运行 `node --test test/preview.browser.mjs`；可用 `PLAYWRIGHT_MODULE` 指定其模块入口、`CHROME_EXECUTABLE` 指定 Chrome 可执行文件。测试加载真实插件代码，在隔离页面中检查输入框层级 7/9、向上展开、窄窗口向下回退及删除交互，不访问真实对话。
 
 ## 许可证
 

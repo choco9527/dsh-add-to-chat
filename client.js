@@ -49,6 +49,8 @@ window.__ModuleLoader__.load({
       style.id = STYLE_ID
       style.textContent = [
         `[data-${ACTION_ID}], [data-${RAIL_ID}], [data-${PREVIEW_ID}], [data-${MARKER_ID}] { position: fixed; z-index: 1; }`,
+        // Body-mounted previews must clear the composer seat (7, or 9 with an open menu).
+        `[data-${PREVIEW_ID}] { z-index: 10; }`,
         `[data-${ACTION_ID}][hidden], [data-${RAIL_ID}][hidden], [data-${PREVIEW_ID}][hidden], [data-${MARKER_ID}][hidden] { display: none !important; }`,
         `[data-${ACTION_ID}] { display: inline-flex; transform: translate(-50%, -100%); }`,
         `[data-${ACTION_ID}][data-placement="below"] { transform: translateX(-50%); }`,
@@ -69,9 +71,8 @@ window.__ModuleLoader__.load({
         `[data-${PREVIEW_ID}] [data-quote-preview-text] { max-height: 104px; overflow: auto; color: var(--dsw-alias-label-primary, #17191c); font-size: 13px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }`,
         `[data-${PREVIEW_ID}] [data-quote-preview-remove] { grid-column: 3; align-self: start; width: 20px; height: 20px; border: 0; border-radius: 50%; cursor: pointer; background: transparent; color: var(--dsw-alias-label-tertiary, #8b9199); font-size: 15px; line-height: 1; opacity: .58; }`,
         `[data-${PREVIEW_ID}] [data-quote-preview-remove]:hover, [data-${PREVIEW_ID}] [data-quote-preview-remove]:focus-visible { background: rgb(15 23 42 / 8%); color: var(--dsw-alias-label-primary, #17191c); opacity: 1; }`,
-        `[data-${MARKER_ID}] { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #1677ff) 28%, transparent); border-radius: 50%; background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-state-business-primary, #1677ff); box-shadow: 0 4px 12px rgb(15 23 42 / 14%); cursor: pointer; font: 11px/1 system-ui, sans-serif; }`,
+        `[data-${MARKER_ID}] { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid color-mix(in srgb, var(--dsw-alias-state-business-primary, #1677ff) 28%, transparent); border-radius: 50%; background: var(--dsw-alias-bg-layer-1, #fff); color: var(--dsw-alias-state-business-primary, #1677ff); box-shadow: 0 4px 12px rgb(15 23 42 / 14%); cursor: default; font: 11px/1 system-ui, sans-serif; }`,
         `@supports not (backdrop-filter: blur(3px)) { [data-${ACTION_ID}] button, [data-${RAIL_ID}] [data-quote-pill] { background: var(--dsw-alias-bg-layer-1, #fff); } }`,
-        `@supports (anchor-name: --dsh-add-to-chat-anchor) { [data-${PREVIEW_ID}][data-anchored] { top: anchor(bottom); left: anchor(center); transform: translate(-50%, 8px); position-try-fallbacks: flip-block, flip-inline; } }`,
       ].join('\n')
       document.head.appendChild(style)
     }
@@ -168,7 +169,7 @@ window.__ModuleLoader__.load({
         const left = Math.max(margin, Math.min(bounds.left, window.innerWidth - previewBounds.width - margin))
         const below = bounds.bottom + gap
         const above = bounds.top - previewBounds.height - gap
-        const top = below + previewBounds.height <= window.innerHeight - margin || above < margin ? below : above
+        const top = above >= margin ? above : below
         preview.style.left = `${left}px`
         preview.style.top = `${Math.max(margin, Math.min(top, window.innerHeight - previewBounds.height - margin))}px`
         preview.style.transform = 'none'
@@ -237,7 +238,6 @@ window.__ModuleLoader__.load({
         const marker = markers.get(ref)
         if (marker === undefined) return
         marker.button.remove()
-        marker.preview.remove()
         markers.delete(ref)
       }
 
@@ -246,20 +246,13 @@ window.__ModuleLoader__.load({
           const bounds = marker.range.getBoundingClientRect()
           if (bounds.width === 0 && bounds.height === 0) {
             marker.button.hidden = true
-            marker.preview.hidden = true
             return
           }
           marker.button.style.left = `${Math.min(window.innerWidth - 28, Math.max(6, bounds.right + 5))}px`
           marker.button.style.top = `${Math.max(6, bounds.top - 3)}px`
           marker.button.hidden = false
-          if (!marker.anchored && !marker.preview.hidden) {
-            const buttonBounds = marker.button.getBoundingClientRect()
-            marker.preview.style.left = `${buttonBounds.left}px`
-            marker.preview.style.top = `${buttonBounds.bottom + 8}px`
-          }
         } catch {
           marker.button.hidden = true
-          marker.preview.hidden = true
         }
       }
 
@@ -270,29 +263,13 @@ window.__ModuleLoader__.load({
           return
         }
         if (range === null) return
-        const markerButton = document.createElement('button')
-        markerButton.type = 'button'
+        const markerButton = document.createElement('span')
+        markerButton.setAttribute('role', 'img')
         markerButton.setAttribute(`data-${MARKER_ID}`, '')
         markerButton.textContent = '1'
         markerButton.setAttribute('aria-label', t('addedOne'))
-        const markerPreview = document.createElement('div')
-        markerPreview.setAttribute(`data-${PREVIEW_ID}`, '')
-        markerPreview.textContent = quote.text
-        markerPreview.hidden = true
-        const anchored = typeof CSS !== 'undefined' && CSS.supports?.('anchor-name: --dsh-add-to-chat-anchor') === true
-        if (anchored) {
-          const anchorName = `--dsh-add-to-chat-${quote.ref.replace(/[^a-z0-9-]/giu, '')}`
-          markerButton.style.setProperty('anchor-name', anchorName)
-          markerPreview.style.setProperty('position-anchor', anchorName)
-          markerPreview.setAttribute('data-anchored', '')
-        }
-        const marker = { button: markerButton, preview: markerPreview, range, anchored }
-        markerButton.addEventListener('mouseenter', () => { markerPreview.hidden = false; positionMarker(marker) })
-        markerButton.addEventListener('mouseleave', () => { markerPreview.hidden = true })
-        markerButton.addEventListener('focus', () => { markerPreview.hidden = false; positionMarker(marker) })
-        markerButton.addEventListener('blur', () => { markerPreview.hidden = true })
-        markerButton.addEventListener('click', () => { markerPreview.hidden = !markerPreview.hidden; positionMarker(marker) })
-        document.body.append(markerButton, markerPreview)
+        const marker = { button: markerButton, range }
+        document.body.append(markerButton)
         markers.set(quote.ref, marker)
         positionMarker(marker)
       }
@@ -457,7 +434,6 @@ window.__ModuleLoader__.load({
         preview.remove()
         for (const marker of markers.values()) {
           marker.button.remove()
-          marker.preview.remove()
         }
       }
     }

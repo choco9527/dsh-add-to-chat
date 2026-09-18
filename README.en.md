@@ -24,8 +24,9 @@ Select text in a DSH assistant reply and choose **Add to chat**. The plugin keep
 - Each selection stays within one assistant reply; multiple annotations can be added in succession.
 - Does not send automatically. The user can edit ordinary draft text or send annotations without text.
 - The “x annotations” hover card shows the full source text and supports individual or bulk removal.
+- Draft annotation previews open above the pill when space permits, fall back below otherwise, and sit above the composer so details and remove buttons remain accessible.
 - It never writes Markdown, hidden nodes, or chips into the Lexical editor, so Backspace cannot remove an annotation by accident.
-- A small marker remains beside the original selection while its annotation awaits submission.
+- A numbered marker remains beside the original selection without a text popup. Read the original text in the annotations card above the composer.
 - Interface copy follows the active DSH locale, supports Chinese and English, and refreshes immediately after a language switch.
 
 ## Compatibility
@@ -49,6 +50,8 @@ dsh plugin --profile web add .
 ```
 
 Restart the selected DSH profile after installation. Do not also manually add this plugin id to a profile `cordis.patch.yml`: the bundle already registers itself.
+
+Browser regression: with Playwright installed, run `node --test test/preview.browser.mjs`. Set `PLAYWRIGHT_MODULE` to use an alternate module entry and `CHROME_EXECUTABLE` to use a specific Chrome executable. The test loads the real plugin into an isolated page and checks composer layers 7/9, upward placement, narrow-window fallback, and removal without accessing real conversations.
 
 ## License
 
